@@ -31,7 +31,7 @@ enum rowValue {
   second
 };
 
-String TagsCadastradas[] = {"b5da2b77"};
+String registeredTags[] = {"b5da2b77"};
 int timesDenied = 0;
 
 void setup()
@@ -85,8 +85,8 @@ bool isBlocked()
 bool isAccessGranted (String tag)
 {
   //checking if idTag is registered
-  for (int i = 0; i < (sizeof(TagsCadastradas) / sizeof(String)); i++) {
-    if (tag.equalsIgnoreCase(TagsCadastradas[i]))
+  for (int i = 0; i < (sizeof(registeredTags) / sizeof(String)); i++) {
+    if (tag.equalsIgnoreCase(registeredTags[i]))
       return true;
   }
 
