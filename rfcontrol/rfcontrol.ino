@@ -31,10 +31,8 @@ enum rowValue {
   second
 };
 
-bool permitionGranted = false;
 String TagsCadastradas[] = {"b5da2b77"};
 int timesDenied = 0;
-boolean isBlocked = false;
 
 void setup()
 {
@@ -54,53 +52,56 @@ void setup()
 
 void loop()
 {
-  if (timesDenied < 3)
-    reading();
-}
-void reading() {
+  if (!isBlocked())
+  {
+    showMessage(MESSAGE_ASK_FOR_CARD);
 
-  showMessage(MESSAGE_ASK_FOR_CARD);
-
-  String idTag = ""; //Inicialmente IDtag deve estar vazia.
-
-  // Verifica se existe uma Tag presente
-  if (!leitorRFID.PICC_IsNewCardPresent() || !leitorRFID.PICC_ReadCardSerial()) {
-    delay(50);
-    return;
-  }
-
-  // Pega o ID da Tag através da função LeitorRFID.uid e Armazena o ID na variável IDtag
-  for (byte i = 0; i < leitorRFID.uid.size; i++) {
-    idTag.concat(String(leitorRFID.uid.uidByte[i], HEX));
-  }
-
-  //Compara o valor do ID lido com os IDs armazenados no vetor TagsCadastradas[]
-  for (int i = 0; i < (sizeof(TagsCadastradas) / sizeof(String)); i++) {
-    if (idTag.equalsIgnoreCase(TagsCadastradas[i])  ) {
-      permitionGranted = true; //Variável permitionGranted assume valor verdadeiro caso o ID Lido esteja cadastrado
+    // check if there is a tag present
+    if (!leitorRFID.PICC_IsNewCardPresent() || !leitorRFID.PICC_ReadCardSerial()) {
+      delay(50);
+      return;
     }
+
+    String idTag = "";
+
+    //getting idTag from the RFID reader
+    for (byte i = 0; i < leitorRFID.uid.size; i++) {
+      idTag.concat(String(leitorRFID.uid.uidByte[i], HEX));
+    }
+
+    if (isAccessGranted(idTag))
+      allowAccess();
+    else
+      denyAccess();
+    delay(2000); //wait 2 seconds before waiting for a new reading
+  }
+}
+
+bool isBlocked()
+{
+  return timesDenied >= 3;
+}
+
+bool isAccessGranted (String tag)
+{
+  //checking if idTag is registered
+  for (int i = 0; i < (sizeof(TagsCadastradas) / sizeof(String)); i++) {
+    if (tag.equalsIgnoreCase(TagsCadastradas[i]))
+      return true;
   }
 
-  if (permitionGranted == true)
-    allowAccess();
-  else
-    denyAccess();
-
-  delay(2000); //wait 2 second before waiting for a new reading
+  return false;
 }
 
 void allowAccess() {
-  //Ligando o buzzer com uma frequência de 1500 hz e ligando o led verde.
-  lcd.clear();
-  digitalWrite(LED_VERDE, HIGH);
+
   showMessage(MESSAGE_WELCOMING);
+  
+  digitalWrite(LED_VERDE, HIGH);
   delay(3000);
 
-  //Desligando o buzzer e led verde.
   digitalWrite(LED_VERDE, LOW);
-  lcd.clear();
   delay(100);
-  permitionGranted = false;
 }
 
 void denyAccess()
@@ -128,15 +129,12 @@ void blockSystem ()
 {
   showMessage(MESSAGE_BLOCKED_SYSTEM);
 
-  //lighting up red led for indefinitely
   digitalWrite(LED_VERMELHO, HIGH);
 
   //emiting sound for three seconds
   tone(BUZZER, 500);
   delay(3000);
   noTone(BUZZER);
-
-  isBlocked = true;
 }
 
 void showMessage (String message)
